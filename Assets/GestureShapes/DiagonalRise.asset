@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a077d567aea401a825d3910f0368e74, type: 3}
+  m_Name: DiagonalRise
+  m_EditorClassIdentifier:
+  shapeId: DiagonalRise
+  detectionCooldown: 0.5
+  gizmoColor: {r: 1, g: 1, b: 0, a: 1}
+  minimumSampleCount: 12
+  minimumDistance: 0.4
+  maxDeviationFromLine: 0.1
+  minimumStraightness: 0.85
+  enforceDirection: 1
+  expectedDirection: {x: 0.5, y: 1, z: 0}
+  directionTolerance: 25
+  allowReverse: 0
