@@ -10,6 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5cecf59a665e4b41bc29fb226e478d13, type: 3}
+
   m_Name: FullCircle
   m_EditorClassIdentifier:
   shapeId: Circle
@@ -89,3 +90,4 @@ MonoBehaviour:
   - {x: 0.8134, y: -0.2467}
   - {x: 0.8337, y: -0.1658}
   - {x: 0.8459, y: -0.0833}
+

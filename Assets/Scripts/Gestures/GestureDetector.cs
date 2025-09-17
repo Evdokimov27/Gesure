@@ -8,6 +8,7 @@ namespace GestureRecognition
     /// <summary>
     /// Tracks the movement history of configured objects and raises events when gestures are recognised.
     /// Gesture analysis is delegated to pluggable <see cref="GestureShape"/> definitions.
+
     /// </summary>
     public class GestureDetector : MonoBehaviour
     {
@@ -61,6 +62,7 @@ namespace GestureRecognition
         {
             public GestureShape shape;
             public UnityEvent<Transform> onDetected = new UnityEvent<Transform>();
+
         }
 
         [Header("Tracked Objects")]
@@ -95,12 +97,14 @@ namespace GestureRecognition
         private GestureMatchEvent onGestureMatched = new GestureMatchEvent();
 
         [Header("Debug")]
+
         [SerializeField]
         [Tooltip("If enabled, successful detections are logged to the Unity console.")]
         private bool logDetections = true;
 
         [SerializeField]
         [Tooltip("Draws the captured trail and last detected gestures in the scene view during play mode.")]
+
         private bool drawDebug = true;
 
         [SerializeField]
@@ -117,6 +121,7 @@ namespace GestureRecognition
         /// Event raised whenever any configured shape produces a successful match.
         /// </summary>
         public GestureMatchEvent OnGestureMatched => onGestureMatched;
+
 
         private void Update()
         {
@@ -212,6 +217,7 @@ namespace GestureRecognition
                 if (logDetections)
                 {
                     Debug.Log($"[{nameof(GestureDetector)}] Gesture '{shape.ShapeId}' detected for '{tracked.target.name}'.");
+
                 }
             }
         }
@@ -248,6 +254,7 @@ namespace GestureRecognition
                 tracked.samples.Clear();
                 tracked.lastMatches.Clear();
                 tracked.lastDetectionTimes.Clear();
+
             }
         }
 
@@ -285,6 +292,7 @@ namespace GestureRecognition
                 }
             }
         }
+
 #endif
 
         private void SampleObject(TrackedObject tracked, float currentTime)
@@ -296,7 +304,6 @@ namespace GestureRecognition
             {
                 samples.Add(new Sample { position = currentPosition, time = currentTime });
             }
-
             for (int i = 0; i < samples.Count; i++)
             {
                 if (currentTime - samples[i].time <= maxSampleAge)
@@ -305,7 +312,6 @@ namespace GestureRecognition
                     {
                         samples.RemoveRange(0, i);
                     }
-
                     return;
                 }
             }
@@ -362,6 +368,7 @@ namespace GestureRecognition
         }
 
         internal static float CalculateAngularCoverage(List<float> angles)
+
         {
             angles.Sort();
             float maxGap = 0f;

@@ -620,6 +620,7 @@ MonoBehaviour:
   logDetections: 1
   drawDebug: 1
   trailColor: {r: 0, g: 1, b: 1, a: 1}
+
 --- !u!114 &1890000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -648,7 +649,6 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: GestureRecognition.GestureSequenceResponder+SequenceCompletedEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
