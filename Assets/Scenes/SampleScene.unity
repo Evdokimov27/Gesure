@@ -566,7 +566,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1890000001}
   - component: {fileID: 1890000002}
-  - component: {fileID: 1890000003}
   m_Layer: 0
   m_Name: Gesture System
   m_TagString: Untagged
@@ -607,19 +606,20 @@ MonoBehaviour:
   minPointDistance: 0.005
   maxSampleAge: 3
   minSampleCount: 25
-  shapes:
-  - {fileID: 11400000, guid: d0da6e9ccea14572bd8193fbc9e149a3, type: 2}
-  - {fileID: 11400000, guid: b6d79d13243d41a5a935eb505ff91912, type: 2}
-  - {fileID: 11400000, guid: e5c3b7c7b84f4f04b90ee6b31dc50dc5, type: 2}
-  - {fileID: 11400000, guid: 5a5a1398d5344544b09c461ce8e1f791, type: 2}
-  shapeEvents: []
-  onGestureMatched:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: GestureRecognition.GestureDetector+GestureMatchEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  minCircleRadius: 0.1
+  radiusVarianceTolerance: 0.2
+  minCoverageAngle: 300
+  minTravelledCircumferenceRatio: 0.75
+  detectionCooldown: 1
   logDetections: 1
   drawDebug: 1
   trailColor: {r: 0, g: 1, b: 1, a: 1}
+  circleColor: {r: 0, g: 1, b: 0, a: 1}
+  onCircleDetected:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: GestureRecognition.GestureDetector+CircleGestureEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+
 --- !u!114 &1890000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -648,6 +648,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: GestureRecognition.GestureSequenceResponder+SequenceCompletedEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+
 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
