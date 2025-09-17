@@ -33,7 +33,7 @@ namespace GestureRecognition
             internal float lastCircleRadius;
         }
 
-        internal struct Sample
+        private struct Sample
         {
             public Vector3 position;
             public float time;
