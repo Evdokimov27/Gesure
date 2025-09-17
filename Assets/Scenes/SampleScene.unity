@@ -620,6 +620,36 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: GestureRecognition.GestureDetector+CircleGestureEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 
+--- !u!114 &1890000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1890000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23b5ee0f84d64b0e83d87967ebc864b0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  detector: {fileID: 1890000002}
+  steps:
+  - label: Circle Start
+    shape: {fileID: 11400000, guid: d0da6e9ccea14572bd8193fbc9e149a3, type: 2}
+  - label: Diagonal Rise
+    shape: {fileID: 11400000, guid: 5a5a1398d5344544b09c461ce8e1f791, type: 2}
+  - label: Circle End
+    shape: {fileID: 11400000, guid: d0da6e9ccea14572bd8193fbc9e149a3, type: 2}
+  maxStepGap: 2
+  requireSameTarget: 1
+  restartOnFirstMatch: 1
+  logCompletion: 1
+  onSequenceCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: GestureRecognition.GestureSequenceResponder+SequenceCompletedEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+
+
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

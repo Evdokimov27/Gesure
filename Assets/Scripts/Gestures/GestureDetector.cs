@@ -6,6 +6,7 @@ using UnityEngine.Events;
 namespace GestureRecognition
 {
     /// <summary>
+
     /// Tracks the movement history of configured objects and raises events when a gesture is recognised.
     /// Currently supports detecting circular motion.
     /// </summary>
@@ -63,6 +64,7 @@ namespace GestureRecognition
 
         [SerializeField]
         [Tooltip("Minimum number of samples required before gesture analysis starts.")]
+
         private int minSampleCount = 25;
 
         [Header("Circle Detection")]
@@ -90,16 +92,19 @@ namespace GestureRecognition
         private float detectionCooldown = 1f;
 
         [Header("Debug")] 
+
         [SerializeField]
         [Tooltip("If enabled, successful detections are logged to the Unity console.")]
         private bool logDetections = true;
 
         [SerializeField]
+
         [Tooltip("Draws the captured trail and last detected circle in the scene view during play mode.")]
         private bool drawDebug = true;
 
         [SerializeField]
         private Color trailColor = Color.cyan;
+
 
         [SerializeField]
         private Color circleColor = Color.green;
@@ -140,6 +145,7 @@ namespace GestureRecognition
                 {
                     continue;
                 }
+
 
                 if (TryDetectCircle(tracked, currentTime, out Vector3 center, out float radius))
                 {
@@ -213,6 +219,7 @@ namespace GestureRecognition
                     Gizmos.DrawLine(tracked.samples[i - 1].position, tracked.samples[i].position);
                 }
 
+
                 if (tracked.hasLastCircle)
                 {
                     DrawCircleGizmo(tracked.lastCircleCenter, tracked.lastCircleRadius, tracked.samples);
@@ -244,6 +251,7 @@ namespace GestureRecognition
                 previousPoint = nextPoint;
             }
         }
+
 #endif
 
         private void SampleObject(TrackedObject tracked, float currentTime)
@@ -255,8 +263,6 @@ namespace GestureRecognition
             {
                 samples.Add(new Sample { position = currentPosition, time = currentTime });
             }
-
-            // Remove stale samples.
             for (int i = 0; i < samples.Count; i++)
             {
                 if (currentTime - samples[i].time <= maxSampleAge)
@@ -270,6 +276,7 @@ namespace GestureRecognition
             }
 
             samples.Clear();
+
             tracked.hasLastCircle = false;
         }
 
@@ -388,6 +395,7 @@ namespace GestureRecognition
 
             return normal;
         }
+
 
         private static float CalculateAngularCoverage(List<float> angles)
         {
