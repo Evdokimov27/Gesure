@@ -9,18 +9,52 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 40444e66c9ea42aea55de4b4a50363d8, type: 3}
+  m_Script: {fileID: 11500000, guid: 5cecf59a665e4b41bc29fb226e478d13, type: 3}
   m_Name: HorizontalArc
   m_EditorClassIdentifier:
   shapeId: HorizontalArc
-  detectionCooldown: 1
+  detectionCooldown: 0.6
   gizmoColor: {r: 1, g: 0.5, b: 0, a: 1}
-  minimumSampleCount: 20
-  minRadius: 0.1
-  radiusVarianceTolerance: 0.25
-  minCoverageAngle: 140
-  maxCoverageAngle: 220
-  minTravelledArcRatio: 0.7
-  enforceNormalAlignment: 1
-  requiredNormal: {x: 0, y: 1, z: 0}
-  normalTolerance: 15
+  minimumSampleCount: 18
+  closedLoop: 0
+  minimumPathLength: 0.8
+  comparisonPointCount: 48
+  maxAverageError: 0.09
+  allowMirrored: 1
+  allowReversed: 1
+  closureDistanceRatio: 0.2
+  editorPointSpacing: 0.02
+  points:
+  - {x: -0.85, y: 0.0}
+  - {x: -0.8456, y: 0.086}
+  - {x: -0.8326, y: 0.1711}
+  - {x: -0.811, y: 0.2545}
+  - {x: -0.7811, y: 0.3352}
+  - {x: -0.7432, y: 0.4125}
+  - {x: -0.6976, y: 0.4856}
+  - {x: -0.6449, y: 0.5537}
+  - {x: -0.5856, y: 0.6161}
+  - {x: -0.5203, y: 0.6722}
+  - {x: -0.4496, y: 0.7213}
+  - {x: -0.3743, y: 0.7631}
+  - {x: -0.2952, y: 0.7971}
+  - {x: -0.2131, y: 0.8229}
+  - {x: -0.1287, y: 0.8402}
+  - {x: -0.0431, y: 0.8489}
+  - {x: 0.0431, y: 0.8489}
+  - {x: 0.1287, y: 0.8402}
+  - {x: 0.2131, y: 0.8229}
+  - {x: 0.2952, y: 0.7971}
+  - {x: 0.3743, y: 0.7631}
+  - {x: 0.4496, y: 0.7213}
+  - {x: 0.5203, y: 0.6722}
+  - {x: 0.5856, y: 0.6161}
+  - {x: 0.6449, y: 0.5537}
+  - {x: 0.6976, y: 0.4856}
+  - {x: 0.7432, y: 0.4125}
+  - {x: 0.7811, y: 0.3352}
+  - {x: 0.811, y: 0.2545}
+  - {x: 0.8326, y: 0.1711}
+  - {x: 0.8456, y: 0.086}
+  - {x: 0.85, y: 0.0}
+

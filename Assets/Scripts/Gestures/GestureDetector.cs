@@ -6,9 +6,9 @@ using UnityEngine.Events;
 namespace GestureRecognition
 {
     /// <summary>
+    /// Tracks the movement history of configured objects and raises events when gestures are recognised.
+    /// Gesture analysis is delegated to pluggable <see cref="GestureShape"/> definitions.
 
-    /// Tracks the movement history of configured objects and raises events when a gesture is recognised.
-    /// Currently supports detecting circular motion.
     /// </summary>
     public class GestureDetector : MonoBehaviour
     {
@@ -22,27 +22,47 @@ namespace GestureRecognition
             internal readonly List<Sample> samples = new List<Sample>();
 
             [NonSerialized]
-            internal float lastCircleTime = float.NegativeInfinity;
+            internal readonly Dictionary<GestureShape, float> lastDetectionTimes = new Dictionary<GestureShape, float>();
 
             [NonSerialized]
-            internal bool hasLastCircle;
-
-            [NonSerialized]
-            internal Vector3 lastCircleCenter;
-
-            [NonSerialized]
-            internal float lastCircleRadius;
+            internal readonly Dictionary<GestureShape, GestureMatch> lastMatches = new Dictionary<GestureShape, GestureMatch>();
         }
 
-        private struct Sample
+        internal struct Sample
         {
             public Vector3 position;
             public float time;
         }
 
         [Serializable]
-        public class CircleGestureEvent : UnityEvent<Transform, Vector3, float>
+        public struct GestureMatch
         {
+            public GestureShape shape;
+            public Transform target;
+            public Vector3 center;
+            public float radius;
+            public Vector3 normal;
+            public float coverageAngle;
+            public float travelDistance;
+            public Vector3 travelDirection;
+            public Vector3 startPosition;
+            public Vector3 endPosition;
+            public float duration;
+            public bool isClockwise;
+            public Vector3[] sampledPositions;
+        }
+
+        [Serializable]
+        public class GestureMatchEvent : UnityEvent<GestureMatch>
+        {
+        }
+
+        [Serializable]
+        public class ShapeEvent
+        {
+            public GestureShape shape;
+            public UnityEvent<Transform> onDetected = new UnityEvent<Transform>();
+
         }
 
         [Header("Tracked Objects")]
@@ -64,61 +84,44 @@ namespace GestureRecognition
 
         [SerializeField]
         [Tooltip("Minimum number of samples required before gesture analysis starts.")]
+        private int minSampleCount = 10;
 
-        private int minSampleCount = 25;
-
-        [Header("Circle Detection")]
+        [Header("Shapes")]
         [SerializeField]
-        [Tooltip("Minimum acceptable radius for a detected circular gesture (world units).")]
-        private float minCircleRadius = 0.1f;
+        private List<GestureShape> shapes = new List<GestureShape>();
 
         [SerializeField]
-        [Range(0.01f, 0.5f)]
-        [Tooltip("Maximum allowed relative standard deviation of the radius across sampled points.")]
-        private float radiusVarianceTolerance = 0.2f;
+        private List<ShapeEvent> shapeEvents = new List<ShapeEvent>();
 
         [SerializeField]
-        [Range(90f, 360f)]
-        [Tooltip("Minimum angular coverage in degrees before a circular gesture is considered complete.")]
-        private float minCoverageAngle = 300f;
+        private GestureMatchEvent onGestureMatched = new GestureMatchEvent();
 
-        [SerializeField]
-        [Range(0.2f, 1.5f)]
-        [Tooltip("Required ratio between the travelled distance and the circle circumference.")]
-        private float minTravelledCircumferenceRatio = 0.75f;
-
-        [SerializeField]
-        [Tooltip("Cooldown between detections for the same object to avoid repeated triggers (seconds).")]
-        private float detectionCooldown = 1f;
-
-        [Header("Debug")] 
+        [Header("Debug")]
 
         [SerializeField]
         [Tooltip("If enabled, successful detections are logged to the Unity console.")]
         private bool logDetections = true;
 
         [SerializeField]
+        [Tooltip("Draws the captured trail and last detected gestures in the scene view during play mode.")]
 
-        [Tooltip("Draws the captured trail and last detected circle in the scene view during play mode.")]
         private bool drawDebug = true;
 
         [SerializeField]
         private Color trailColor = Color.cyan;
 
-
-        [SerializeField]
-        private Color circleColor = Color.green;
-
-        [SerializeField]
-        private CircleGestureEvent onCircleDetected = new CircleGestureEvent();
-
         private float sampleTimer;
 
         /// <summary>
-        /// Event invoked whenever a tracked object performs a circular gesture.
-        /// Provides the transform, detected circle center and radius.
+        /// Collection of shapes that will be evaluated for every tracked object.
         /// </summary>
-        public CircleGestureEvent OnCircleDetected => onCircleDetected;
+        public IReadOnlyList<GestureShape> Shapes => shapes;
+
+        /// <summary>
+        /// Event raised whenever any configured shape produces a successful match.
+        /// </summary>
+        public GestureMatchEvent OnGestureMatched => onGestureMatched;
+
 
         private void Update()
         {
@@ -146,20 +149,75 @@ namespace GestureRecognition
                     continue;
                 }
 
+                TryMatchShapes(tracked, currentTime);
+            }
+        }
 
-                if (TryDetectCircle(tracked, currentTime, out Vector3 center, out float radius))
+        private void TryMatchShapes(TrackedObject tracked, float currentTime)
+        {
+            List<Sample> samples = tracked.samples;
+
+            for (int i = 0; i < shapes.Count; i++)
+            {
+                GestureShape shape = shapes[i];
+                if (shape == null)
                 {
-                    tracked.lastCircleTime = currentTime;
-                    tracked.hasLastCircle = true;
-                    tracked.lastCircleCenter = center;
-                    tracked.lastCircleRadius = radius;
+                    continue;
+                }
 
-                    onCircleDetected.Invoke(tracked.target, center, radius);
+                int requiredSamples = Mathf.Max(minSampleCount, shape.MinimumSampleCount);
+                if (samples.Count < requiredSamples)
+                {
+                    continue;
+                }
 
-                    if (logDetections)
-                    {
-                        Debug.Log($"[{nameof(GestureDetector)}] Circle detected for '{tracked.target.name}' at {center} with radius {radius:0.###}.");
-                    }
+                if (!tracked.lastDetectionTimes.TryGetValue(shape, out float lastTime))
+                {
+                    lastTime = float.NegativeInfinity;
+                }
+
+                if (currentTime - lastTime < shape.DetectionCooldown)
+                {
+                    continue;
+                }
+
+                if (!shape.TryMatch(this, tracked, samples, out GestureMatch match))
+                {
+                    continue;
+                }
+
+                match.shape = shape;
+                match.target = tracked.target;
+                match.sampledPositions = match.sampledPositions ?? CopyPositions(samples);
+                if (samples.Count > 0)
+                {
+                    match.startPosition = samples[0].position;
+                    match.endPosition = samples[samples.Count - 1].position;
+                    float duration = samples[samples.Count - 1].time - samples[0].time;
+                    match.duration = duration > 0f ? duration : match.duration;
+                }
+
+                if (match.travelDistance <= 0f)
+                {
+                    match.travelDistance = CalculateTravelDistance(samples);
+                }
+
+                if (match.travelDirection == Vector3.zero)
+                {
+                    Vector3 displacement = match.endPosition - match.startPosition;
+                    match.travelDirection = displacement.sqrMagnitude > 1e-6f ? displacement.normalized : Vector3.zero;
+                }
+
+                tracked.lastDetectionTimes[shape] = currentTime;
+                tracked.lastMatches[shape] = match;
+
+                onGestureMatched.Invoke(match);
+                InvokeShapeEvents(shape, tracked.target);
+
+                if (logDetections)
+                {
+                    Debug.Log($"[{nameof(GestureDetector)}] Gesture '{shape.ShapeId}' detected for '{tracked.target.name}'.");
+
                 }
             }
         }
@@ -194,7 +252,9 @@ namespace GestureRecognition
             if (tracked != null)
             {
                 tracked.samples.Clear();
-                tracked.hasLastCircle = false;
+                tracked.lastMatches.Clear();
+                tracked.lastDetectionTimes.Clear();
+
             }
         }
 
@@ -219,36 +279,17 @@ namespace GestureRecognition
                     Gizmos.DrawLine(tracked.samples[i - 1].position, tracked.samples[i].position);
                 }
 
-
-                if (tracked.hasLastCircle)
+                foreach (KeyValuePair<GestureShape, GestureMatch> kvp in tracked.lastMatches)
                 {
-                    DrawCircleGizmo(tracked.lastCircleCenter, tracked.lastCircleRadius, tracked.samples);
+                    GestureShape shape = kvp.Key;
+                    if (shape == null)
+                    {
+                        continue;
+                    }
+
+                    Gizmos.color = shape.GizmoColor;
+                    shape.DrawGizmos(kvp.Value);
                 }
-            }
-        }
-
-        private void DrawCircleGizmo(Vector3 center, float radius, List<Sample> samples)
-        {
-            Gizmos.color = circleColor;
-
-            const int segments = 64;
-            Vector3 normal = EstimateNormal(samples, center);
-            Vector3 axisX = Vector3.ProjectOnPlane(Vector3.right, normal);
-            if (axisX.sqrMagnitude < 1e-4f)
-            {
-                axisX = Vector3.ProjectOnPlane(Vector3.up, normal);
-            }
-
-            axisX.Normalize();
-            Vector3 axisY = Vector3.Cross(normal, axisX).normalized;
-
-            Vector3 previousPoint = center + axisX * radius;
-            for (int i = 1; i <= segments; i++)
-            {
-                float angle = (i / (float)segments) * Mathf.PI * 2f;
-                Vector3 nextPoint = center + (Mathf.Cos(angle) * axisX + Mathf.Sin(angle) * axisY) * radius;
-                Gizmos.DrawLine(previousPoint, nextPoint);
-                previousPoint = nextPoint;
             }
         }
 
@@ -276,114 +317,44 @@ namespace GestureRecognition
             }
 
             samples.Clear();
-
-            tracked.hasLastCircle = false;
+            tracked.lastMatches.Clear();
         }
 
-        private bool TryDetectCircle(TrackedObject tracked, float currentTime, out Vector3 center, out float radius)
+        private void InvokeShapeEvents(GestureShape shape, Transform target)
         {
-            center = Vector3.zero;
-            radius = 0f;
-
-            if (currentTime - tracked.lastCircleTime < detectionCooldown)
+            for (int i = 0; i < shapeEvents.Count; i++)
             {
-                return false;
-            }
-
-            List<Sample> samples = tracked.samples;
-            if (samples.Count < minSampleCount)
-            {
-                return false;
-            }
-
-            Vector3 centroid = Vector3.zero;
-            foreach (Sample sample in samples)
-            {
-                centroid += sample.position;
-            }
-
-            centroid /= samples.Count;
-            Vector3 normal = EstimateNormal(samples, centroid);
-            if (normal.sqrMagnitude < 1e-6f)
-            {
-                return false;
-            }
-
-            normal.Normalize();
-            Vector3 axisX = Vector3.ProjectOnPlane(samples[samples.Count - 1].position - centroid, normal);
-            if (axisX.sqrMagnitude < 1e-6f)
-            {
-                axisX = Vector3.ProjectOnPlane(Vector3.right, normal);
-                if (axisX.sqrMagnitude < 1e-6f)
+                ShapeEvent binding = shapeEvents[i];
+                if (binding?.shape == shape && binding.onDetected != null)
                 {
-                    axisX = Vector3.ProjectOnPlane(Vector3.up, normal);
+                    binding.onDetected.Invoke(target);
                 }
             }
-
-            axisX.Normalize();
-            Vector3 axisY = Vector3.Cross(normal, axisX).normalized;
-
-            float accumulatedRadius = 0f;
-            float totalSquaredError = 0f;
-            float travelledDistance = 0f;
-            Vector3 previous = samples[0].position;
-            List<float> angles = new List<float>(samples.Count);
-
-            for (int i = 0; i < samples.Count; i++)
-            {
-                Vector3 offset = samples[i].position - centroid;
-                Vector2 projected = new Vector2(Vector3.Dot(offset, axisX), Vector3.Dot(offset, axisY));
-
-                float pointRadius = projected.magnitude;
-                accumulatedRadius += pointRadius;
-                angles.Add(Mathf.Atan2(projected.y, projected.x));
-
-                if (i > 0)
-                {
-                    travelledDistance += Vector3.Distance(samples[i].position, previous);
-                }
-
-                previous = samples[i].position;
-            }
-
-            radius = accumulatedRadius / samples.Count;
-            if (radius < minCircleRadius)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < samples.Count; i++)
-            {
-                Vector3 offset = samples[i].position - centroid;
-                Vector2 projected = new Vector2(Vector3.Dot(offset, axisX), Vector3.Dot(offset, axisY));
-                float difference = projected.magnitude - radius;
-                totalSquaredError += difference * difference;
-            }
-
-            float standardDeviation = Mathf.Sqrt(totalSquaredError / samples.Count);
-            if (standardDeviation / radius > radiusVarianceTolerance)
-            {
-                return false;
-            }
-
-            float coverage = CalculateAngularCoverage(angles);
-            if (coverage < minCoverageAngle)
-            {
-                return false;
-            }
-
-            float circumference = 2f * Mathf.PI * radius;
-            float travelRatio = travelledDistance / Mathf.Max(circumference, 1e-5f);
-            if (travelRatio < minTravelledCircumferenceRatio)
-            {
-                return false;
-            }
-
-            center = centroid;
-            return true;
         }
 
-        private static Vector3 EstimateNormal(List<Sample> samples, Vector3 centroid)
+        internal static float CalculateTravelDistance(List<Sample> samples)
+        {
+            float travelledDistance = 0f;
+            for (int i = 1; i < samples.Count; i++)
+            {
+                travelledDistance += Vector3.Distance(samples[i - 1].position, samples[i].position);
+            }
+
+            return travelledDistance;
+        }
+
+        internal static Vector3[] CopyPositions(List<Sample> samples)
+        {
+            Vector3[] result = new Vector3[samples.Count];
+            for (int i = 0; i < samples.Count; i++)
+            {
+                result[i] = samples[i].position;
+            }
+
+            return result;
+        }
+
+        internal static Vector3 EstimateNormal(List<Sample> samples, Vector3 centroid)
         {
             Vector3 normal = Vector3.zero;
             for (int i = 0; i < samples.Count; i++)
@@ -396,8 +367,8 @@ namespace GestureRecognition
             return normal;
         }
 
+        internal static float CalculateAngularCoverage(List<float> angles)
 
-        private static float CalculateAngularCoverage(List<float> angles)
         {
             angles.Sort();
             float maxGap = 0f;
